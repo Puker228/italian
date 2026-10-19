@@ -1,14 +1,16 @@
 [project]
 name = "italian"
 version = "0.1.0"
-description = "ИС «Школа изучения итальянского языка» — PyQt6 + SQLite"
+description = "ИС «Школа изучения итальянского языка» — PyQt6 + PostgreSQL"
 readme = "README.md"
 authors = [
     { name = "danil", email = "danil@email.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "psycopg[binary]>=3.2",
     "pyqt6>=6.11.0",
+    "python-dotenv>=1.0",
     "sqlalchemy>=2.1.5",
 ]
 

@@ -1,14 +1,16 @@
-"""Подключение к SQLite, создание схемы, тестовые данные и резервное копирование."""
+"""Подключение к PostgreSQL, создание схемы, тестовые данные и резервное копирование."""
 
 from __future__ import annotations
 
 import datetime as dt
-import sqlite3
+import os
 from decimal import Decimal
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine, event, select
+from dotenv import load_dotenv
+from sqlalchemy import URL, Engine, create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.schema import CreateTable
 
 from italian.models import (
     Base,
@@ -24,20 +26,42 @@ from italian.models import (
     Teacher,
 )
 
-DEFAULT_DB_PATH = Path("italian_school.sqlite3")
+
+class ConfigError(RuntimeError):
+    pass
 
 
-def make_engine(path: Path | str = DEFAULT_DB_PATH) -> Engine:
-    engine = create_engine(f"sqlite:///{path}")
+def database_url() -> str | URL:
+    """Адрес БД из переменных окружения (или файла .env).
 
-    @event.listens_for(engine, "connect")
-    def _enable_fk(dbapi_conn, _record) -> None:
-        # В SQLite проверка внешних ключей по умолчанию выключена.
-        cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA foreign_keys = ON")
-        cursor.close()
+    DATABASE_URL имеет приоритет; иначе адрес собирается из тех же
+    POSTGRES_* переменных, что использует контейнер db в docker-compose.yml.
+    """
+    load_dotenv()
+    if url := os.getenv("DATABASE_URL"):
+        return url
+    missing = [
+        name
+        for name in ("POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB")
+        if not os.getenv(name)
+    ]
+    if missing:
+        raise ConfigError(
+            "Не заданы переменные " + ", ".join(missing) + ".\n"
+            "Скопируйте .env.example в .env и укажите параметры подключения."
+        )
+    return URL.create(
+        "postgresql+psycopg",
+        username=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
+        port=int(os.getenv("POSTGRES_PORT", "5432")),
+        database=os.environ["POSTGRES_DB"],
+    )
 
-    return engine
+
+def make_engine(url: str | URL | None = None) -> Engine:
+    return create_engine(url or database_url(), pool_pre_ping=True)
 
 
 def init_db(engine: Engine, with_demo_data: bool = True) -> sessionmaker[Session]:
@@ -52,10 +76,32 @@ def init_db(engine: Engine, with_demo_data: bool = True) -> sessionmaker[Session
 
 
 def backup(engine: Engine, target: Path | str) -> None:
-    """Резервная копия БД средствами SQLite (онлайн-бэкап)."""
-    source_path = engine.url.database
-    with sqlite3.connect(source_path) as src, sqlite3.connect(target) as dst:
-        src.backup(dst)
+    """SQL-дамп схемы и данных; восстанавливается командой psql -f <файл>."""
+    tables = Base.metadata.sorted_tables
+    lines = [
+        f"-- Резервная копия БД {engine.url.database} от {dt.datetime.now():%d.%m.%Y %H:%M}",
+        "BEGIN;",
+    ]
+    lines += [f"DROP TABLE IF EXISTS {t.name} CASCADE;" for t in reversed(tables)]
+    with engine.connect() as conn:
+        for table in tables:
+            lines.append(
+                str(CreateTable(table).compile(dialect=engine.dialect)).strip() + ";"
+            )
+            pk = next(iter(table.primary_key.columns))
+            for row in conn.execute(select(table).order_by(pk)).mappings():
+                insert = table.insert().values(dict(row))
+                sql = insert.compile(
+                    dialect=engine.dialect, compile_kwargs={"literal_binds": True}
+                )
+                lines.append(f"{sql};")
+            max_id = conn.scalar(select(func.max(pk)))
+            if max_id is not None:
+                lines.append(
+                    f"SELECT setval(pg_get_serial_sequence('{table.name}', '{pk.name}'), {max_id});"
+                )
+    lines.append("COMMIT;")
+    Path(target).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def seed(session: Session) -> None:

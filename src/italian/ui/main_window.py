@@ -134,7 +134,8 @@ class MainWindow(QMainWindow):
         self._build_menu()
         who = user.role.value + (f": {user.name}" if user.name else "")
         self.statusBar().showMessage(
-            f"Пользователь — {who}   |   БД: {engine.url.database}"
+            f"Пользователь — {who}   |   "
+            f"БД: PostgreSQL {engine.url.host}:{engine.url.port}/{engine.url.database}"
         )
 
     def _build_tabs(self) -> list[tuple[str, QWidget]]:
@@ -255,9 +256,9 @@ class MainWindow(QMainWindow):
             widget.refresh()
 
     def _backup(self) -> None:
-        name = f"italian_school_backup_{dt.datetime.now():%Y%m%d_%H%M%S}.sqlite3"
+        name = f"italian_school_backup_{dt.datetime.now():%Y%m%d_%H%M%S}.sql"
         path, _ = QFileDialog.getSaveFileName(
-            self, "Резервная копия БД", name, "SQLite (*.sqlite3 *.db)"
+            self, "Резервная копия БД", name, "SQL-скрипт (*.sql)"
         )
         if not path:
             return
@@ -268,7 +269,11 @@ class MainWindow(QMainWindow):
                 self, "Резервная копия", f"Не удалось создать копию:\n{exc}"
             )
             return
-        QMessageBox.information(self, "Резервная копия", f"Копия БД сохранена:\n{path}")
+        QMessageBox.information(
+            self,
+            "Резервная копия",
+            f"Копия БД сохранена:\n{path}\n\nВосстановление: psql -f <файл>",
+        )
 
     def _switch_user(self) -> None:
         self.switch_user = True
@@ -283,5 +288,5 @@ class MainWindow(QMainWindow):
             "Справочники: слушатели, преподаватели, курсы A1–C2, аудитории.<br>"
             "Журналы: группы, зачисления, оплаты, расписание.<br>"
             "Отчёты, роли пользователей, резервное копирование.<br><br>"
-            "PyQt6 + SQLAlchemy + SQLite.",
+            "PyQt6 + SQLAlchemy + PostgreSQL.",
         )

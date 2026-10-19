@@ -451,14 +451,22 @@ class EntityTab(QWidget):
         self.refresh()
 
 
+CONSTRAINT_MESSAGES = {
+    "uq_enrollment": "Этот слушатель уже зачислен в выбранную группу.",
+    "classroom_number_key": "Аудитория с таким номером уже существует.",
+    "uq_lesson_room_time": "Аудитория в это время уже занята.",
+    "ck_course_hours": "Количество часов должно быть больше нуля.",
+    "ck_course_price": "Стоимость не может быть отрицательной.",
+    "ck_classroom_capacity": "Вместимость должна быть больше нуля.",
+    "ck_payment_amount": "Сумма оплаты должна быть больше нуля.",
+}
+
+
 def integrity_message(exc: IntegrityError) -> str:
-    text = str(exc.orig)
-    if "uq_enrollment" in text or "enrollment.student_id, enrollment.group_id" in text:
-        return "Этот слушатель уже зачислен в выбранную группу."
-    if "UNIQUE" in text and "classroom.number" in text:
-        return "Аудитория с таким номером уже существует."
-    if "UNIQUE" in text and "lesson" in text:
-        return "Аудитория в это время уже занята."
-    if "FOREIGN KEY" in text:
+    diag = getattr(exc.orig, "diag", None)
+    constraint = getattr(diag, "constraint_name", None)
+    if constraint in CONSTRAINT_MESSAGES:
+        return CONSTRAINT_MESSAGES[constraint]
+    if constraint and constraint.endswith("_fkey"):
         return "Нарушена ссылочная целостность: связанная запись не найдена."
-    return f"Данные не сохранены: {text}"
+    return f"Данные не сохранены: {exc.orig}"

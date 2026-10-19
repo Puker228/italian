@@ -1,25 +1,41 @@
 # ИС «Школа изучения итальянского языка»
 
-Настольное приложение на **PyQt6 + SQLite** (через SQLAlchemy) по лабораторным работам № 1–9, вариант 9.
+Настольное приложение на **PyQt6 + PostgreSQL** (через SQLAlchemy и psycopg) по лабораторным работам № 1–9, вариант 9.
 
 ## Запуск
 
 ```bash
+cp .env.example .env          # логин, пароль и имя БД
+docker compose up -d          # PostgreSQL 18 на 127.0.0.1:5432
 uv sync
-uv run italian                       # БД italian_school.sqlite3 в текущей папке
-uv run italian --db путь/к/базе.sqlite3
-uv run italian --no-demo             # новая БД без тестовых данных
+uv run italian
 ```
 
-При первом запуске создаются таблицы и заполняются тестовые данные.
+При первом запуске приложение создаёт таблицы и заполняет тестовые данные.
+
+Параметры подключения берутся из `.env` — те же `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_DB`, что и у контейнера, плюс `POSTGRES_HOST` / `POSTGRES_PORT`
+(по умолчанию `127.0.0.1:5432`). Можно задать адрес целиком:
+
+```bash
+uv run italian --db-url postgresql+psycopg://user:pass@host:5432/italian_school
+# или переменная окружения DATABASE_URL
+uv run italian --no-demo      # новая БД без тестовых данных
+```
+
+Резервная копия (Файл → Резервная копия) сохраняется SQL-скриптом, восстановление:
+
+```bash
+docker compose exec -T db psql -U italian -d italian_school < backup.sql
+```
 
 ## Что реализовано
 
 | Требование из лаб | Реализация |
 |---|---|
 | ЛР 1 — функции ТЗ | справочники (слушатели, преподаватели, курсы A1–C2, аудитории), зачисление в группу, расписание, учёт оплат и долгов, отчёты, роли |
-| ЛР 1 — надёжность | проверка вводимых данных, резервная копия БД (Файл → Резервная копия, Ctrl+B) |
-| ЛР 3–4 — модель данных | 8 таблиц: `student`, `teacher`, `course`, `classroom`, `study_group`, `enrollment`, `payment`, `lesson` со связями 1:N и внешними ключами (`PRAGMA foreign_keys = ON`) |
+| ЛР 1 — надёжность | проверка вводимых данных, резервная копия БД в SQL (Файл → Резервная копия, Ctrl+B) |
+| ЛР 3–4 — модель данных | PostgreSQL, 8 таблиц: `student`, `teacher`, `course`, `classroom`, `study_group`, `enrollment`, `payment`, `lesson` со связями 1:N, внешними ключами и CHECK-ограничениями |
 | ЛР 8 — модули | «Слушатели и зачисление», «Группы и расписание», «Оплаты», «Отчёты», «Авторизация» (выбор роли) |
 | ЛР 9 — диаграмма классов | абстрактный `Person`, перечисление `Level`, методы `get_full_name`, `get_debt`, `get_schedule`, `is_free`, `add_student`, `add_payment`, `is_paid`, `reschedule`; композиции Group—Lesson и Enrollment—Payment (каскадное удаление) |
 
@@ -47,7 +63,7 @@ uv run italian --no-demo             # новая БД без тестовых �
 src/italian/
 ├── __init__.py        # точка входа main()
 ├── models.py          # ORM-модели (ЛР 4, ЛР 9)
-├── db.py              # SQLite, создание схемы, тестовые данные, бэкап
+├── db.py              # подключение к PostgreSQL, создание схемы, тестовые данные, бэкап
 └── ui/
     ├── widgets.py     # универсальная таблица-справочник и форма редактирования
     ├── specs.py       # описание полей, столбцов и проверок для каждой сущности
