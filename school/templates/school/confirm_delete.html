@@ -1,0 +1,14 @@
+{% extends "school/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="card shadow-sm border-danger"><div class="card-body">
+  <h1 class="h4">Удаление</h1>
+  <p>Удалить запись «{{ object }}» ({{ entity.singular }})?</p>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">Удалить</button>
+    <a class="btn btn-outline-secondary" href="{% url 'entity_list' entity.slug %}">Отмена</a>
+  </form>
+</div></div>
+</div></div>
+{% endblock %}
