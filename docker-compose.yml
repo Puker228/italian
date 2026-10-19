@@ -21,6 +21,23 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
 
+  web:
+    restart: always
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DJANGO_DEBUG=false
+    networks:
+      - trip_app
+    ports:
+      - "127.0.0.1:8000:8000"
+
 volumes:
   postgres_data:
 
