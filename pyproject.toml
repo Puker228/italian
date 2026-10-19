@@ -1,7 +1,7 @@
 [project]
 name = "italian"
 version = "0.1.0"
-description = "Add your description here"
+description = "ИС «Школа изучения итальянского языка» — PyQt6 + SQLite"
 readme = "README.md"
 authors = [
     { name = "danil", email = "danil@email.com" }
