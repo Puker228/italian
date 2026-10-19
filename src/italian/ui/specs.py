@@ -43,7 +43,7 @@ def _validate_enrollment(
     if obj is not None:
         query = query.where(Enrollment.id != obj.id)
     if session.scalar(query) is not None:
-        return "Этот слушатель уже зачислен в выбранную группу."
+        return "Этот ученик уже зачислен в выбранную группу."
     group = session.get(Group, v["group_id"])
     if v["enroll_date"] > group.start_date + dt.timedelta(days=30):
         return (
@@ -100,8 +100,8 @@ def _validate_lesson(
 
 STUDENTS = EntitySpec(
     model=Student,
-    title="Слушатели",
-    singular="слушатель",
+    title="Ученики",
+    singular="ученик",
     order_by=Student.last_name,
     fields=[
         Field("last_name", "Фамилия"),
@@ -214,7 +214,7 @@ ENROLLMENTS = EntitySpec(
     order_by=Enrollment.enroll_date.desc(),
     validate=_validate_enrollment,
     fields=[
-        Field("student_id", "Слушатель", "fk", options=Student),
+        Field("student_id", "ученик", "fk", options=Student),
         Field("group_id", "Группа", "fk", options=Group),
         Field("enroll_date", "Дата зачисления", "date"),
         Field("status", "Статус", "enum", options=EnrollmentStatus),
@@ -222,7 +222,7 @@ ENROLLMENTS = EntitySpec(
     defaults={"status": EnrollmentStatus.ACTIVE},
     columns=[
         Column("Код", lambda o: o.id),
-        Column("Слушатель", lambda o: o.student),
+        Column("ученик", lambda o: o.student),
         Column("Группа", lambda o: o.group),
         Column("Курс", lambda o: o.group.course),
         Column("Дата", lambda o: o.enroll_date),
@@ -247,7 +247,7 @@ PAYMENTS = EntitySpec(
     columns=[
         Column("Код", lambda o: o.id),
         Column("Дата", lambda o: o.pay_date),
-        Column("Слушатель", lambda o: o.enrollment.student),
+        Column("ученик", lambda o: o.enrollment.student),
         Column("Группа", lambda o: o.enrollment.group),
         Column("Сумма, ₽", lambda o: o.amount),
     ],

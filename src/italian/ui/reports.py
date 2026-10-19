@@ -51,7 +51,7 @@ def debtors(session: Session, start: dt.date, end: dt.date) -> Report:
             total += debt
     rows.sort(key=lambda r: r[-1], reverse=True)
     header = [
-        "Слушатель",
+        "ученик",
         "Телефон",
         "Группа",
         "Стоимость, ₽",
@@ -73,7 +73,7 @@ def income(session: Session, start: dt.date, end: dt.date) -> Report:
     ]
     total = sum((r[-1] for r in rows), Decimal(0))
     return (
-        ["Дата", "Слушатель", "Группа", "Сумма, ₽"],
+        ["Дата", "ученик", "Группа", "Сумма, ₽"],
         rows,
         f"Платежей: {len(rows)}, поступило: {fmt(total)} ₽",
     )

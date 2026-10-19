@@ -452,7 +452,7 @@ class EntityTab(QWidget):
 
 
 CONSTRAINT_MESSAGES = {
-    "uq_enrollment": "Этот слушатель уже зачислен в выбранную группу.",
+    "uq_enrollment": "Этот ученик уже зачислен в выбранную группу.",
     "classroom_number_key": "Аудитория с таким номером уже существует.",
     "uq_lesson_room_time": "Аудитория в это время уже занята.",
     "ck_course_hours": "Количество часов должно быть больше нуля.",

@@ -33,7 +33,7 @@ from italian.ui.widgets import EntityTab
 class Role(StrEnum):
     ADMIN = "Администратор"
     TEACHER = "Преподаватель"
-    STUDENT = "Слушатель"
+    STUDENT = "Ученик"
 
 
 @dataclass
@@ -186,7 +186,7 @@ class MainWindow(QMainWindow):
                     EntityTab(specs.GROUPS, f, scope=own_groups, **read_only),
                 ),
                 (
-                    "Слушатели групп",
+                    "ученики групп",
                     EntityTab(specs.ENROLLMENTS, f, scope=own_enrollments, **read_only),
                 ),
             ]
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
             "О программе",
             "<b>ИС «Школа изучения итальянского языка»</b><br>"
             "Вариант 9, лабораторные работы № 1–9.<br><br>"
-            "Справочники: слушатели, преподаватели, курсы A1–C2, аудитории.<br>"
+            "Справочники: ученики, преподаватели, курсы A1–C2, аудитории.<br>"
             "Журналы: группы, зачисления, оплаты, расписание.<br>"
             "Отчёты, роли пользователей, резервное копирование.<br><br>"
             "PyQt6 + SQLAlchemy + PostgreSQL.",

@@ -32,3 +32,25 @@ dev = [
     "pyrefly>=1.4.0",
     "ruff>=0.17.1",
 ]
+
+[tool.ruff]
+exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = [
+    "I", # isort: сортировка импортов
+    "F401", # Pyflakes: неиспользуемые импорты
+    "B", # flake8-bugbear: поиск потенциальных багов и проблем с дизайном
+    "UP", # pyupgrade: обновление синтаксиса до актуальных версий Python
+    "E", # pycodestyle: ошибки стиля
+    "W", # pycodestyle: предупреждения стиля
+    "C4", # flake8-comprehensions: оптимизация списковых включений (comprehensions)
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+    "W191", # indentation contains tabs
+    "B904", # Allow raising exceptions without from e, for HTTPException
+    "ARG001",
+]
+fixable = ["ALL"]
